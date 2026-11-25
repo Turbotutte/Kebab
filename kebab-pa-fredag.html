@@ -1,0 +1,303 @@
+<title>Kebab på fredag</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+/* Layout: en enda fråga överst, en öppen yta under där Ja och Nej flyr från pekaren. */
+:root {
+  --bg: #F6F5F3;
+  --fg: #1D1B1A;
+  --muted: #6B6560;
+  --accent: #C8281E;
+  --accent-fg: #FFFFFF;
+  --yes: #2F7D3B;
+  --yes-fg: #FFFFFF;
+  --no: #3A3634;
+  --no-fg: #FFFFFF;
+  --line: #DDD8D2;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161312;
+    --fg: #F3EFEA;
+    --muted: #A39B94;
+    --accent: #FF5A4D;
+    --accent-fg: #1A0B09;
+    --yes: #4CB05A;
+    --yes-fg: #0F1A11;
+    --no: #5A5350;
+    --no-fg: #FFFFFF;
+    --line: #3A3431;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161312;
+  --fg: #F3EFEA;
+  --muted: #A39B94;
+  --accent: #FF5A4D;
+  --accent-fg: #1A0B09;
+  --yes: #4CB05A;
+  --yes-fg: #0F1A11;
+  --no: #5A5350;
+  --no-fg: #FFFFFF;
+  --line: #3A3431;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+main { max-width: 760px; margin: 0 auto; }
+.label {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 11vw, 5.2rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+h1 span { color: var(--accent); }
+.quip { min-height: 1.6em; color: var(--muted); margin: 0; }
+
+.stage {
+  position: relative;
+  height: clamp(280px, 55vh, 520px);
+  margin-top: 32px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  touch-action: none;
+  overflow: hidden;
+}
+.btn {
+  position: absolute;
+  left: 0; top: 0;
+  min-width: 132px;
+  padding: 18px 30px;
+  border: 0;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: left 0.22s cubic-bezier(.2,.9,.3,1.2), top 0.22s cubic-bezier(.2,.9,.3,1.2);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.btn:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+#yes { background: var(--yes); color: var(--yes-fg); }
+#no { background: var(--no); color: var(--no-fg); }
+
+.result {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--accent);
+  color: var(--accent-fg);
+  padding-block: max(32px, env(safe-area-inset-top, 0px));
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+  animation: pop 0.45s cubic-bezier(.2,.9,.3,1.2);
+  overflow: hidden;
+}
+.result h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 10vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+.result p { font-size: 1.15rem; margin: 0; opacity: 0.9; }
+.result .inner { position: relative; z-index: 2; max-width: 640px; }
+.bit {
+  position: absolute;
+  top: -20px;
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--accent-fg);
+  opacity: 0.85;
+  animation: fall linear forwards;
+}
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+@keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+  .result { animation: none; }
+}
+</style>
+
+<main>
+  <p class="label">Snabb fråga</p>
+  <h1>Kebab på <span>fredag?</span></h1>
+  <p class="quip" id="quip" aria-live="polite">Välj ett svar.</p>
+
+  <div class="stage" id="stage">
+    <button class="btn" id="yes" type="button">Ja</button>
+    <button class="btn" id="no" type="button">Nej</button>
+  </div>
+</main>
+
+<div class="result" id="result" hidden>
+  <div class="inner">
+    <h2>Klart det är kebab på fredag!</h2>
+    <p>Du behövde inte svara. Beslutet är redan taget.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var yes = document.getElementById('yes');
+  var no = document.getElementById('no');
+  var quip = document.getElementById('quip');
+  var result = document.getElementById('result');
+  var buttons = [yes, no];
+  var quips = [
+    'Välj ett svar.',
+    'Nära.',
+    'Lite för långsam.',
+    'Den där ville inte bli tryckt på.',
+    'Fortsätt försöka.',
+    'Det går inte. Vänta bara.',
+    'Du ger inte upp, va?'
+  ];
+  var dodges = 0;
+  var PAD = 8;
+  var TRIGGER = 80;
+
+  function bounds(btn) {
+    return {
+      maxX: Math.max(PAD, stage.clientWidth - btn.offsetWidth - PAD),
+      maxY: Math.max(PAD, stage.clientHeight - btn.offsetHeight - PAD)
+    };
+  }
+  function setPos(btn, x, y) {
+    btn.style.left = x + 'px';
+    btn.style.top = y + 'px';
+    btn._x = x;
+    btn._y = y;
+  }
+  function center(btn, x, y) {
+    return { x: x + btn.offsetWidth / 2, y: y + btn.offsetHeight / 2 };
+  }
+  function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  function relPoint(e) {
+    var r = stage.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function dodge(btn, from) {
+    var other = btn === yes ? no : yes;
+    var b = bounds(btn);
+    var best = null, bestScore = -1;
+    for (var i = 0; i < 40; i++) {
+      var x = PAD + Math.random() * (b.maxX - PAD);
+      var y = PAD + Math.random() * (b.maxY - PAD);
+      var c = center(btn, x, y);
+      var score = from ? dist(c, from) : Math.random() * 100;
+      var oc = center(other, other._x || 0, other._y || 0);
+      if (dist(c, oc) < btn.offsetWidth * 0.9) score -= 200;
+      if (score > bestScore) { bestScore = score; best = { x: x, y: y }; }
+    }
+    setPos(btn, best.x, best.y);
+    dodges++;
+    quip.textContent = quips[Math.min(Math.floor(dodges / 4), quips.length - 1)];
+  }
+  function nearRect(btn, p) {
+    var x0 = btn._x, y0 = btn._y;
+    var x1 = x0 + btn.offsetWidth, y1 = y0 + btn.offsetHeight;
+    var dx = Math.max(x0 - p.x, 0, p.x - x1);
+    var dy = Math.max(y0 - p.y, 0, p.y - y1);
+    return Math.hypot(dx, dy);
+  }
+
+  function layout() {
+    var by = bounds(yes), bn = bounds(no);
+    setPos(yes, Math.min(by.maxX, stage.clientWidth * 0.2), by.maxY / 2);
+    setPos(no, Math.min(bn.maxX, stage.clientWidth * 0.6), bn.maxY / 2);
+  }
+  layout();
+  window.addEventListener('resize', function () {
+    buttons.forEach(function (b) {
+      var bb = bounds(b);
+      setPos(b, Math.min(b._x, bb.maxX), Math.min(b._y, bb.maxY));
+    });
+  });
+
+  stage.addEventListener('pointermove', function (e) {
+    var p = relPoint(e);
+    buttons.forEach(function (b) {
+      if (nearRect(b, p) < TRIGGER) dodge(b, p);
+    });
+  });
+  buttons.forEach(function (b) {
+    b.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      dodge(b, relPoint(e));
+    });
+    b.addEventListener('pointerenter', function (e) {
+      dodge(b, relPoint(e));
+    });
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dodge(b, null);
+    });
+    b.addEventListener('focus', function () {
+      dodge(b, null);
+      b.blur();
+    });
+    b.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        dodge(b, null);
+      }
+    });
+  });
+
+  function confetti() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    for (var i = 0; i < 70; i++) {
+      var s = document.createElement('span');
+      s.className = 'bit';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.animationDuration = 2.4 + Math.random() * 2.4 + 's';
+      s.style.animationDelay = Math.random() * 1.2 + 's';
+      s.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+      result.appendChild(s);
+    }
+  }
+
+  setTimeout(function () {
+    result.hidden = false;
+    confetti();
+  }, 15000);
+})();
+</script>
